@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Daily News Agent</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+    <header>
+        <h1>Daily News Agent</h1>
+        <p>Your personalized daily news feed</p>
+    </header>
+
+    <main>
+
+        <section class="digest">
+            <h2>AI Curated Daily Digest</h2>
+
+            <p>
+                Your AI-generated daily news digest will appear here.
+            </p>
+        </section>
+
+        <section class="news-section">
+
+            <h2>Latest News</h2>
+
+            <div class="news-grid">
+
+                {% for article in articles %}
+
+                <div class="news-card">
+
+                    <span class="category">
+                        {{ article.category }}
+                    </span>
+
+                    <h3>{{ article.title }}</h3>
+
+                    <p class="source">
+                        {{ article.source_name }}
+                    </p>
+
+                    <p class="date">
+                        {{ article.publication_date }}
+                    </p>
+
+                    <p class="content">
+                        {{ article.content[:250] }}...
+                    </p>
+
+                    <a href="{{ url_for('article', article_id=article.id) }}">
+                        Read Article
+                    </a>
+
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>

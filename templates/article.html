@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>{{ article.title }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+
+<body>
+
+    <header>
+        <h1>Daily News Agent</h1>
+    </header>
+
+    <main>
+
+        <article class="article-page">
+
+            <span class="category">
+                {{ article.category }}
+            </span>
+
+            <h1>{{ article.title }}</h1>
+
+            <p class="source">
+                Source: {{ article.source_name }}
+            </p>
+
+            <p class="date">
+                Published: {{ article.publication_date }}
+            </p>
+
+            <div class="article-content">
+                {{ article.content }}
+            </div>
+
+            <a href="{{ article.url }}" target="_blank">
+                View Original Article
+            </a>
+
+            <br><br>
+
+            <a href="{{ url_for('home') }}">
+                ← Back to News
+            </a>
+
+        </article>
+
+    </main>
+
+</body>
+</html>
