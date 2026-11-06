@@ -9,3 +9,4 @@ class Article(db.Model):
     content = db.Column(db.Text, nullable=False)
     category = db.Column(db.String(50), nullable=False)
     collected_at = db.Column(db.DateTime, nullable=False)
+    embedding=db.Column(db.JSON, nullable=True)
