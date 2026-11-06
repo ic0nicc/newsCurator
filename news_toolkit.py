@@ -6,6 +6,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 from agno.tools.toolkit import Toolkit
 from articlecontent import extract_article, classify_article
+from collector import app, save_articles
 
 
 load_dotenv()
@@ -36,7 +37,9 @@ class NewsToolkit(Toolkit):
         instructions = (
             "Use get_news to fetch the configured NewsAPI top headlines. "
             "Use get_rss_news to fetch articles from the configured RSS feeds. "
-            "Both tools return article metadata, extracted content, and a category. "
+            "Both tools extract, classify, and save articles to the database. "
+            "Their results contain the articles, saved_to_database count, "
+            "and skipped count. "
             "Preserve the returned URLs and source names when summarising news."
         )
 
@@ -52,8 +55,9 @@ class NewsToolkit(Toolkit):
         """
         Fetch top headlines from NewsAPI.
 
-        Returns a list of article dictionaries containing title, URL,
-        source name, publication date, extracted content, and category.
+        Fetch news, extract and classify articles,
+        save them to the database, and return the
+        articles along with database insertion statistics.
         """
         response = requests.get(url, params=params)
 
@@ -90,7 +94,12 @@ class NewsToolkit(Toolkit):
                 "category": category
             })
 
-        return news
+        saved, skipped = self.save_to_database(news)
+        return {
+            "articles": news,
+            "saved_to_database": saved,
+            "skipped": skipped
+        }
 
     def get_rss_news(self):
         """
@@ -133,4 +142,17 @@ class NewsToolkit(Toolkit):
                     "category": category
                 })
 
-        return news
+        saved, skipped = self.save_to_database(news)
+
+        return {
+            "articles": news,
+            "saved_to_database": saved,
+            "skipped": skipped
+        }
+    def save_to_database(self, news):
+        from database import db
+        with app.app_context():
+            db.create_all()
+            saved, skipped = save_articles(news)
+
+        return saved, skipped
