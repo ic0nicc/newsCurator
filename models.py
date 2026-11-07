@@ -10,3 +10,4 @@ class Article(db.Model):
     category = db.Column(db.String(50), nullable=False)
     collected_at = db.Column(db.DateTime, nullable=False)
     embedding=db.Column(db.JSON, nullable=True)
+    cluster_label = db.Column(db.Integer, nullable=True)

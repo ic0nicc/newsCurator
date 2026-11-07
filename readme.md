@@ -1,41 +1,52 @@
-# Daily News Curating Agent
-# =========================
-#
-# SETUP REQUIREMENTS
-#
-# 1. Install Python 3
-#    Check installation with:
-#    py --version
-#
-# 2. Install DB Browser for SQLite
-#    Used to view and inspect the project's SQLite database.
-#
-# 3. Get a NewsAPI API key
-#    Create an account at:
-#    https://newsapi.org/
-#
-# 4. Create a .env file in the main project folder.
-#    Add your own NewsAPI key:
-#
-#    NEWS_API_KEY=your_actual_api_key_here
-#
-#    Do NOT upload the .env file to GitHub.
-#
-# 5. Install all Python dependencies using:
-#
-#    py -m pip install -r requirements.txt
-#
-# 6. Run the Flask application using:
-#
-#    py app.py
-#
-# 7. Open the website in a browser:
-#
-#    http://127.0.0.1:5000/
-#
-# 8. The SQLite database will be created automatically by the application.
-#    DB Browser for SQLite can be used to view the stored articles.
-#
-#
-# PYTHON PACKAGES
-# =========================
+Further improvement scope:
+
+A. Don't cluster unrelated time periods together
+Suppose an article about Google's AI announcement was published six months ago.
+
+Another article about a new Google AI model is published today.
+
+They might have high semantic similarity, but they could describe completely different events.
+
+Therefore, consider publication time when clustering.
+
+For example:
+- Cluster articles collected within the same daily window.
+- Compare articles from the previous 24–48 hours.
+- Retain older clusters for historical reference.
+Eventually, you can introduce temporal similarity into your clustering logic.
+
+B. DBSCAN can suffer from chaining
+Consider three articles:
+- A is similar to B.
+- B is similar to C.
+- A is not particularly similar to C.
+DBSCAN can still put all three into the same cluster because density connectivity can connect them indirectly.
+
+This is a potential problem for news deduplication.
+
+Later, you can investigate:
+- Agglomerative clustering with average linkage.
+- Graph-based clustering.
+- Additional pairwise similarity validation within clusters.
+Don't try to solve every edge case in your first implementation.
+
+C. Don't confuse semantic similarity with event identity
+This is particularly important for your project.
+
+Consider:
+- Google releases Gemini.
+- Google announces a new AI research facility.
+- Google invests in an AI startup.
+All three articles are semantically related to Google and AI.
+
+But they describe three different events.
+
+A sentence embedding model captures semantic relationships, not guaranteed event identity.
+
+For better event-level clustering, you can eventually combine:
+1. Title embeddings.
+2. Article content embeddings.
+3. Named entity information.
+4. Publication time.
+5. Pairwise similarity thresholds.
+This will help distinguish articles discussing the same event from articles merely discussing the same subject.
