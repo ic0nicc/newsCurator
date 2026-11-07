@@ -13,12 +13,15 @@ load_dotenv()
 
 API_KEY = os.getenv("NEWS_API_KEY")
 
-url = "https://newsapi.org/v2/top-headlines"
+URL = "https://newsapi.org/v2/top-headlines"
 
-params = {
-    "apiKey": API_KEY,
+PARAMS = {
     "country": "us",
     "pageSize": 5
+}
+
+HEADERS = {
+    "X-Api-Key": API_KEY
 }
 
 RSS_FEEDS = {
@@ -28,19 +31,19 @@ RSS_FEEDS = {
 
 
 class NewsToolkit(Toolkit):
+
     def __init__(self, **kwargs):
+
         tools = [
-            self.get_news,
-            self.get_rss_news
+            self.collect_all_news
         ]
 
         instructions = (
-            "Use get_news to fetch the configured NewsAPI top headlines. "
-            "Use get_rss_news to fetch articles from the configured RSS feeds. "
-            "Both tools extract, classify, and save articles to the database. "
-            "Their results contain the articles, saved_to_database count, "
-            "and skipped count. "
-            "Preserve the returned URLs and source names when summarising news."
+            "Use collect_all_news whenever the user requests news collection. "
+            "This tool collects news from both NewsAPI and RSS feeds. "
+            "It extracts, classifies, and saves articles to the database. "
+            "Preserve article titles, URLs, and source names when reporting news. "
+            "Report the collection statistics accurately."
         )
 
         super().__init__(
@@ -51,19 +54,84 @@ class NewsToolkit(Toolkit):
             **kwargs
         )
 
+    def collect_all_news(self):
+        """
+        Collect news from both NewsAPI and RSS feeds.
+        Return combined collection statistics.
+        """
+
+        news_api_result = {
+            "articles": [],
+            "saved_to_database": 0,
+            "skipped": 0
+        }
+
+        rss_result = {
+            "articles": [],
+            "saved_to_database": 0,
+            "skipped": 0
+        }
+
+        errors = []
+
+        try:
+            news_api_result = self.get_news()
+        except Exception as e:
+            errors.append(f"NewsAPI error: {str(e)}")
+
+        try:
+            rss_result = self.get_rss_news()
+        except Exception as e:
+            errors.append(f"RSS error: {str(e)}")
+
+        api_articles = news_api_result.get("articles", [])
+        rss_articles = rss_result.get("articles", [])
+
+        all_articles = api_articles + rss_articles
+
+        return {
+            "total_collected": len(all_articles),
+
+            "total_saved": (
+                news_api_result.get("saved_to_database", 0)
+                + rss_result.get("saved_to_database", 0)
+            ),
+
+            "total_skipped": (
+                news_api_result.get("skipped", 0)
+                + rss_result.get("skipped", 0)
+            ),
+
+            "news_api_count": len(api_articles),
+            "rss_count": len(rss_articles),
+
+            "articles": [
+                {
+                    "title": article["title"],
+                    "source": article["source_name"],
+                    "category": article["category"],
+                    "url": article["url"]
+                }
+                for article in all_articles
+            ],
+
+            "errors": errors
+        }
+
     def get_news(self):
         """
         Fetch top headlines from NewsAPI.
-
-        Fetch news, extract and classify articles,
-        save them to the database, and return the
-        articles along with database insertion statistics.
+        Extract, classify, and save articles.
         """
-        response = requests.get(url, params=params)
 
-        if response.status_code != 200:
-            print("Error:", response.json())
-            return []
+        response = requests.get(
+            URL,
+            params=PARAMS,
+            headers=HEADERS,
+            timeout=20
+        )
+
+        response.raise_for_status()
 
         data = response.json()
 
@@ -72,14 +140,18 @@ class NewsToolkit(Toolkit):
         news = []
 
         for article in articles:
+
             title = article.get("title")
             article_url = article.get("url")
             source_name = article.get("source", {}).get("name")
             publication_date = article.get("publishedAt")
             description = article.get("description")
 
+            if not article_url:
+                continue
+
             content = extract_article(article_url)
-            ##this classification task will be done by the transformer...
+
             category = classify_article(
                 title or "",
                 description or ""
@@ -95,6 +167,7 @@ class NewsToolkit(Toolkit):
             })
 
         saved, skipped = self.save_to_database(news)
+
         return {
             "articles": news,
             "saved_to_database": saved,
@@ -103,28 +176,36 @@ class NewsToolkit(Toolkit):
 
     def get_rss_news(self):
         """
-        Fetch news from the configured RSS feeds.
-
-        Returns a list of article dictionaries containing title, URL,
-        source name, publication date, extracted content, and category.
+        Fetch news from configured RSS feeds.
+        Extract, classify, and save articles.
         """
+
         news = []
 
         for source_name, feed_url in RSS_FEEDS.items():
+
             feed = feedparser.parse(feed_url)
 
             for entry in feed.entries:
+
                 title = entry.get("title")
                 article_url = entry.get("link")
                 description = entry.get("summary", "")
 
+                if not article_url:
+                    continue
+
                 publication_date = None
 
                 if entry.get("published_parsed"):
-                    publication_date = datetime(*entry.published_parsed[:6])
+                    publication_date = datetime(
+                        *entry.published_parsed[:6]
+                    )
 
                 elif entry.get("updated_parsed"):
-                    publication_date = datetime(*entry.updated_parsed[:6])
+                    publication_date = datetime(
+                        *entry.updated_parsed[:6]
+                    )
 
                 content = extract_article(article_url)
 
@@ -149,10 +230,15 @@ class NewsToolkit(Toolkit):
             "saved_to_database": saved,
             "skipped": skipped
         }
+
     def save_to_database(self, news):
+
         from database import db
+
         with app.app_context():
+
             db.create_all()
+
             saved, skipped = save_articles(news)
 
         return saved, skipped
