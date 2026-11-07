@@ -88,35 +88,52 @@ class NewsToolkit(Toolkit):
         rss_articles = rss_result.get("articles", [])
 
         all_articles = api_articles + rss_articles
+        
+        processing_result = None
+        try:
 
+            print("\nStarting automated processing...")
+
+            from pipeline import run_curation_pipeline
+
+            processing_result = run_curation_pipeline()
+
+        except Exception as e:
+
+            errors.append(
+                f"Processing pipeline error: {str(e)}"
+            )
+            
         return {
-            "total_collected": len(all_articles),
+        "total_collected": len(all_articles),
 
-            "total_saved": (
-                news_api_result.get("saved_to_database", 0)
-                + rss_result.get("saved_to_database", 0)
-            ),
+        "total_saved": (
+            news_api_result.get("saved_to_database", 0)
+            + rss_result.get("saved_to_database", 0)
+        ),
 
-            "total_skipped": (
-                news_api_result.get("skipped", 0)
-                + rss_result.get("skipped", 0)
-            ),
+        "total_skipped": (
+            news_api_result.get("skipped", 0)
+            + rss_result.get("skipped", 0)
+        ),
 
-            "news_api_count": len(api_articles),
-            "rss_count": len(rss_articles),
+        "news_api_count": len(api_articles),
+        "rss_count": len(rss_articles),
 
-            "articles": [
-                {
-                    "title": article["title"],
-                    "source": article["source_name"],
-                    "category": article["category"],
-                    "url": article["url"]
-                }
-                for article in all_articles
-            ],
+        "articles": [
+            {
+                "title": article["title"],
+                "source": article["source_name"],
+                "category": article["category"],
+                "url": article["url"]
+            }
+            for article in all_articles
+        ],
 
-            "errors": errors
-        }
+        "curation": processing_result,
+
+        "errors": errors
+    }
 
     def get_news(self):
         """
