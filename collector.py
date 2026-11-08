@@ -4,10 +4,15 @@ from article_db import add_article, article_exists, get_latest_articles
 from news_api import get_news
 from rss_news import get_rss_news
 from datetime import datetime
+from pathlib import Path
 
 app = Flask(__name__)
 
-app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///news.db"
+BASE_DIR = Path(__file__).resolve().parent
+
+DATABASE_PATH = BASE_DIR / "newsCurator" / "instance" / "news.db"
+
+app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE_PATH.as_posix()}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db.init_app(app)

@@ -1,6 +1,7 @@
 
 import numpy as np
-
+import json
+from pathlib import Path
 from collector import app
 from database import db
 from article_db import get_all_articles
@@ -95,8 +96,8 @@ def run_curation_pipeline():
                 curated_stories.append(result)
 
         print("\nNews curation completed.")
-
-        return {
+        
+        result = {
             "status": "success",
             "total_articles": len(articles),
             "total_clusters": len(normal_clusters),
@@ -104,3 +105,10 @@ def run_curation_pipeline():
             "total_stories": len(curated_stories),
             "stories": curated_stories
         }
+
+        digest_path = Path(__file__).with_name("daily_digest.json")
+
+        with open(digest_path, "w", encoding="utf-8") as file:
+            json.dump(result, file, ensure_ascii=False, indent=4)
+
+        return result

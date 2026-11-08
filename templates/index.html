@@ -1,67 +1,152 @@
+
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Daily News Agent</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily News Curator</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 
 <body>
-    <header>
-        <h1>Daily News Agent</h1>
-        <p>Your personalized daily news feed</p>
+
+    <header class="site-header">
+        <div class="header-content">
+            <h1>Daily News Curator</h1>
+            <p>Your daily dose of important news, intelligently curated.</p>
+        </div>
     </header>
 
-    <main>
+    <main class="container">
 
         <section class="digest">
-            <h2>AI Curated Daily Digest</h2>
+            <div class="section-heading">
+                <h2>AI Curated Daily Digest</h2>
+                <p>Stay informed with AI-generated summaries of the latest news.</p>
+            </div>
 
-            <p>
-                Your AI-generated daily news digest will appear here.
-            </p>
-        </section>
+            {% if digest and digest.status == "success" and digest.stories %}
 
-        <section class="news-section">
+                <div class="digest-stats">
+                    <div>
+                        <strong>{{ digest.total_articles }}</strong>
+                        <span>Articles Processed</span>
+                    </div>
 
-            <h2>Latest News</h2>
+                    <div>
+                        <strong>{{ digest.total_clusters }}</strong>
+                        <span>Topics Identified</span>
+                    </div>
 
-            <div class="news-grid">
+                    <div>
+                        <strong>{{ digest.total_stories }}</strong>
+                        <span>Stories Generated</span>
+                    </div>
+                </div>
 
-                {% for article in articles %}
+                <div class="digest-stories">
 
-                <div class="news-card">
+                    {% for story in digest.stories %}
 
-                    <span class="category">
-                        {{ article.category }}
-                    </span>
+                        <article class="digest-story">
+                            <h3>Story {{ loop.index }}</h3>
 
-                    <h3>{{ article.title }}</h3>
+                            <p class="article-count">
+                                Based on {{ story.article_count }} article(s)
+                            </p>
 
-                    <p class="source">
-                        {{ article.source_name }}
-                    </p>
+                            <p class="summary">
+                                {{ story.summary }}
+                            </p>
 
-                    <p class="date">
-                        {{ article.publication_date }}
-                    </p>
+                            <div class="story-sources">
+                                <h4>Read more</h4>
 
-                    <p class="content">
-                        {{ article.content[:250] }}...
-                    </p>
+                                <ul>
+                                    {% for source in story.sources %}
+                                        <li>
+                                            <a href="{{ source.url }}" target="_blank" rel="noopener noreferrer">
+                                                {{ source.title }}
+                                            </a>
+                                            <span>{{ source.source }}</span>
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </article>
 
-                    <a href="{{ url_for('article', article_id=article.id) }}">
-                        Read Article
-                    </a>
+                    {% endfor %}
 
                 </div>
 
-                {% endfor %}
+            {% else %}
 
+                <p class="empty-message">
+                    No AI-generated digest is available yet. Run the news agent to generate one.
+                </p>
+
+            {% endif %}
+        </section>
+
+
+        <section class="latest-news">
+
+            <div class="section-heading">
+                <h2>Latest News</h2>
+                <p>Recently collected articles from different news sources.</p>
             </div>
+
+            {% if articles %}
+
+                <div class="news-grid">
+
+                    {% for article in articles %}
+
+                        <article class="news-card">
+
+                            <span class="news-category">
+                                {{ article.category or "General" }}
+                            </span>
+
+                            <h3>{{ article.title }}</h3>
+
+                            <div class="news-meta">
+                                <span>{{ article.source_name }}</span>
+
+                                {% if article.publication_date %}
+                                    <span>{{ article.publication_date }}</span>
+                                {% endif %}
+                            </div>
+
+                            <p class="news-description">
+                                {{ article.content[:200] }}{% if article.content and article.content|length > 200 %}...{% endif %}
+                            </p>
+
+                            <a class="read-more" href="{{ url_for('article', article_id=article.id) }}">
+                                Read Article →
+                            </a>
+
+                        </article>
+
+                    {% endfor %}
+
+                </div>
+
+            {% else %}
+
+                <p class="empty-message">
+                    No news articles have been collected yet.
+                </p>
+
+            {% endif %}
 
         </section>
 
     </main>
+
+    <footer class="site-footer">
+        <p>Daily News Curator | Powered by AI</p>
+    </footer>
 
 </body>
 </html>
