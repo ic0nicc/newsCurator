@@ -6,7 +6,7 @@ def cluster_articles(embeddings):
   embeddings = np.array(embeddings)
 
   clustering = DBSCAN(
-      eps=0.20,
+      eps=0.30,
       min_samples=2,
       metric="cosine"
   )
