@@ -10,6 +10,7 @@ app = Flask(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 DATABASE_PATH = BASE_DIR / "instance" / "news.db"
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE_PATH.as_posix()}"
+DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 DIGEST_PATH = Path(__file__).with_name("daily_digest.json")
 db.init_app(app)

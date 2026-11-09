@@ -11,7 +11,7 @@ app = Flask(__name__)
 BASE_DIR = Path(__file__).resolve().parent
 
 DATABASE_PATH = BASE_DIR / "newsCurator" / "instance" / "news.db"
-
+DATABASE_PATH.parent.mkdir(parents=True, exist_ok=True)
 app.config["SQLALCHEMY_DATABASE_URI"] = f"sqlite:///{DATABASE_PATH.as_posix()}"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
