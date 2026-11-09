@@ -2,7 +2,7 @@
 from sentence_transformers import SentenceTransformer
 from article_db import get_all_articles
 from database import db
-
+import numpy as np
 
 model = SentenceTransformer(
     "sentence-transformers/all-MiniLM-L6-v2"
@@ -22,23 +22,33 @@ def generate_embeddings():
         print("All articles already have embeddings.")
         return
 
-    texts = []
+    titles=[]
+    contents=[]
 
     for article in missing_articles:
 
-        text = (
-            article.title + ". " +
-            article.content[:1500]
-        )
+        titles.append(article.title or "")
+        contents.append((article.content or "")[:500])
 
-        texts.append(text)
-
-    embeddings = model.encode(
-        texts,
+    title_embeddings = model.encode(
+        titles,
         convert_to_numpy=True,
         normalize_embeddings=True,
         show_progress_bar=True
     )
+    content_embeddings = model.encode(
+        contents,
+        convert_to_numpy=True,
+        normalize_embeddings=True,
+        show_progress_bar=True
+    )    
+
+    embeddings = (
+        0.65*title_embeddings +
+        0.35*content_embeddings
+    )
+    norms = np.linalg.norm(embeddings, axis=1, keepdims=True)
+    embeddings = embeddings / np.maximum(norms, 1e-12)
 
     for article, embedding in zip(
         missing_articles, embeddings
